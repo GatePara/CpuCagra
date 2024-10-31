@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(CpuPG)
+project(cpupg)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,6 +16,10 @@ else()
     message(FATAL_ERROR "OpenMP not found")
 endif()
 
-add_definitions(-O3 -march=native -Wall)
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+# set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fsanitize=address")
+
+add_definitions(-Ofast -march=native -Wall)
+# add_definitions(-O2 -march=native -Wall)
 add_subdirectory(src)
 add_subdirectory(test)
