@@ -74,9 +74,18 @@ namespace cpupg
       // graph_po = K / 16;
     }
 
+    void destory()
+    {
+      if (data != nullptr)
+      {
+        free(data);
+        data = nullptr;
+      }
+    }
+
     ~Graph()
     {
-      free(data);
+      destory();
     }
 
     const int *edges(int u) const { return data + K * u; }
