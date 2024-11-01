@@ -86,6 +86,16 @@ namespace cpupg
 
     void CagraBuilder::reverse()
     {
+        std::vector<std::unordered_set<int>> neighbors(reorderG.N);
+#pragma omp parallel for schedule(dynamic, 100)
+        for (int32_t id_x = 0; id_x < reorderG.N; id_x++)
+        {
+            for (int32_t i = 0; i < reorderG.K; ++i)
+            {
+                neighbors[id_x].insert(reorderG.at(id_x, i));
+            }
+        }
+
         reversedG.init(reorderG.N, reorderG.K);
         edgeCount.resize(reversedG.N, 0);
 #pragma omp parallel for schedule(dynamic, 100)
@@ -94,13 +104,18 @@ namespace cpupg
             for (int32_t i = 0; i < reversedG.K; ++i)
             {
                 int32_t id_y = reorderG.at(id_x, i);
-                unsigned short pos;
-#pragma omp atomic capture
-                pos = edgeCount[id_y]++;
 
-                if (pos < reversedG.K)
+                // 这里做了去重，保证同一个反向边只出现一次
+                if (neighbors[id_y].find(id_x) == neighbors[id_y].end())
                 {
-                    reversedG.at(id_y, pos) = id_x;
+                    unsigned short pos;
+#pragma omp atomic capture
+                    pos = edgeCount[id_y]++;
+
+                    if (pos < reversedG.K)
+                    {
+                        reversedG.at(id_y, pos) = id_x;
+                    }
                 }
             }
         }
