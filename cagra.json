@@ -1,8 +1,8 @@
 {
     "cagra": {
-        "KNNG_PATH": "/home/wutong/code/NSGFlex/siftn_128nn.graph",
+        "KNNG_PATH": "/path/to/your/project-root/knng.graph",
         "KNNG_FORMAT": "efanna",
-        "SAVE_PATH": "siftn_128nn_64d_cagra.graph",
+        "SAVE_PATH": "/path/to/your/project-root/cagra.graph",
         "R_INIT": 128,
         "R": 64
     }

@@ -1,9 +1,0 @@
-{
-    "cagra": {
-        "KNNG_PATH": "/home/wutong/data/webface25m",
-        "KNNG_FORMAT": "fbin",
-        "SAVE_PATH": "webface25m_128nn_64d_cagra.graph",
-        "R_INIT": 128,
-        "R": 64
-    }
-}
