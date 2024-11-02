@@ -10,15 +10,16 @@
 #include <vector>
 #include <iostream>
 #include "memory.hpp"
+#include "assert.h"
 
 namespace cpupg
 {
   struct GraphInfo
   {
-    size_t N;
-    size_t R;
-    size_t R_INIT;
-    size_t R_KNNG;
+    int N;
+    int R;
+    int R_INIT;
+    int R_KNNG;
 
     void print()
     {
@@ -68,7 +69,9 @@ namespace cpupg
 
     void init(int N, int K)
     {
-      alloc2M((void **)&data, (size_t)N * K * sizeof(id_t), 0);
+      assert(N > 0);
+      assert(K > 0);
+      alloc2M((void **)&data, (size_t)N * K * sizeof(id_t), -1);
       this->K = K;
       this->N = N;
       // graph_po = K / 16;
@@ -162,6 +165,8 @@ namespace cpupg
 
     void loadKnng(const char *filename)
     {
+      // knng format
+      // k(usigned 4B),vector(unsigned 4B * k),k,vector...
       std::ifstream in(filename, std::ios::binary);
       if (!in.is_open())
       {
@@ -169,23 +174,18 @@ namespace cpupg
         exit(1);
       }
 
-      // 读取 k 值，表示每个节点的邻居数
       unsigned k;
       in.read(reinterpret_cast<char *>(&k), sizeof(unsigned));
-
       // 获取文件大小并计算元素数量
       in.seekg(0, std::ios::end);
       size_t fsize = static_cast<size_t>(in.tellg());
       size_t num = (fsize) / ((k + 1) * sizeof(unsigned)); // 每组 k 个邻居 + 1 个占位符
       in.seekg(sizeof(unsigned), std::ios::beg);           // 重置到第一个记录的开始位置
 
-      if (data != nullptr)
-      {
-        free(data);
-      }
+      destory();
+
       init(num, k); // 初始化图
 
-      // 读取数据
       for (size_t i = 0; i < num; i++)
       {
         std::vector<unsigned> tmp(k);
@@ -201,8 +201,31 @@ namespace cpupg
       in.close();
     }
 
+    void loadKnngFbin(const char *filename)
+    {
+      // fbin format
+      // num(usigned 4B),k(unsigned 4B),vector(unsigned 4B * num * k)
+      std::ifstream in(filename, std::ios::binary);
+      if (!in.is_open())
+      {
+        std::cerr << "Error: Cannot open file " << filename << std::endl;
+        exit(1);
+      }
+      destory(); // 释放原有内存
+
+      unsigned num, k;
+      in.read(reinterpret_cast<char *>(&num), sizeof(unsigned));
+      in.read(reinterpret_cast<char *>(&k), sizeof(unsigned));
+      init(num, k);                                                                        // 初始化图
+      in.read(reinterpret_cast<char *>(data), (size_t)num * (size_t)k * sizeof(unsigned)); // 读取所有邻居
+      in.close();
+    }
+
     void saveKnng(const char *filename)
     {
+      // knng format
+      // k(usigned 4B),vector(unsigned 4B * k),k,vector...
+
       std::ofstream out(filename, std::ios::binary);
       if (!out.is_open())
       {
@@ -212,7 +235,6 @@ namespace cpupg
 
       unsigned k = K;
 
-      // 按节点依次保存数据
       for (int32_t i = 0; i < N; i++)
       {
         int32_t *edge = edges(i);

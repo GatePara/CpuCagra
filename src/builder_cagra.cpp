@@ -19,7 +19,7 @@ void printMemoryUsage()
     }
 }
 
-constexpr int lines = 128 / 8;
+constexpr int workloads = 100;
 
 namespace cpupg
 {
@@ -36,30 +36,29 @@ namespace cpupg
     void CagraBuilder::reorder(Graph<int32_t> &knnG)
     {
         assert(info.R_INIT <= info.R_KNNG);
-        Graph<unsigned short> countG(info.N, info.R_INIT); // 统计可绕行边数量
-
+        // Graph<uint32_t> countG(info.N, info.R_INIT); // 统计可绕行边数量
+        reorderG.init(info.N, info.R); // 重新排序后的图
+        const int lines = std::max((info.R_INIT * sizeof(int) / CACHELINE), (size_t)1);
 #pragma omp parallel for schedule(dynamic, 100)
-        for (int id_x = 0; id_x < countG.N; id_x++)
+        for (int id_x = 0; id_x < knnG.N; id_x++)
         {
 
-            knnG.prefetch(id_x, lines);
-            knnG.prefetch(knnG.at(id_x, 0), lines); // 可能并没有什么用哦
-
+            knnG.prefetch(id_x, lines); // 可能并没有什么用哦
             std::unordered_map<int, int> neighbors_x;
-            for (int32_t i = 0; i < countG.K; ++i)
+            std::vector<std::pair<uint32_t, int>> count(info.R_INIT);
+            for (int32_t i = 0; i < info.R_INIT; ++i)
             {
                 int id_y = knnG.at(id_x, i);
                 neighbors_x[id_y] = i;
+                count[i] = {0, id_y};
             }
 
-            for (int32_t dist_x_y = 0; dist_x_y < countG.K; dist_x_y++)
+            for (int32_t dist_x_y = 0; dist_x_y < info.R_INIT; dist_x_y++)
             {
 
-                knnG.prefetch(knnG.at(id_x, dist_x_y + 1), lines);
-
                 int32_t id_y = knnG.at(id_x, dist_x_y);
-
-                for (int32_t dist_y_z = 0; dist_y_z < countG.K; dist_y_z++)
+                knnG.prefetch(knnG.at(id_x, dist_x_y + 1), lines);
+                for (int32_t dist_y_z = 0; dist_y_z < info.R_INIT; dist_y_z++)
                 {
                     int32_t id_z = knnG.at(id_y, dist_y_z);
                     auto it = neighbors_x.find(id_z);
@@ -69,43 +68,30 @@ namespace cpupg
                         bool detourable = std::max(dist_x_y, dist_y_z) < dist_x_z;
                         if (detourable)
                         {
-                            countG.at(id_x, dist_x_z)++;
+                            count[dist_x_z].first++;
                         }
                     }
                 }
             }
-        }
-        
-        reorderG.init(info.N, info.R);
-// 根据每个点的可绕行边数量重新排序
-#pragma omp parallel for schedule(dynamic, 100)
-        for (int32_t id_x = 0; id_x < reorderG.N; id_x++)
-        {
-            std::vector<std::pair<int, int>> count;
+            std::sort(count.begin(), count.end(), [](const auto &a, const auto &b)
+                      { return a.first < b.first; });
             for (int32_t i = 0; i < reorderG.K; ++i)
             {
-                count.push_back(std::make_pair(countG.at(id_x, i), knnG.at(id_x, i)));
-            }
-            std::sort(count.begin(), count.end());
-            for (int32_t i = 0; i < reorderG.K; ++i)
-            {
-                // if (id_x == 0)
-                // {
-                //     std::cout << count[i].first << " " << count[i].second << std::endl;
-                // }
                 reorderG.at(id_x, i) = count[i].second;
             }
         }
         knnG.destory();
         printMemoryUsage();
-        // reorderG.debug(0);
+#ifdef DEBUG
+        reorderG.debug(0);
+#endif
     }
 
     void CagraBuilder::reverse()
     {
         reversedG.init(reorderG.N, reorderG.K);
         edgeCount.resize(reversedG.N, 0);
-#pragma omp parallel for schedule(dynamic, 100)
+#pragma omp parallel for schedule(dynamic, workloads)
         for (int32_t id_x = 0; id_x < reorderG.N; id_x++)
         {
             for (int32_t i = 0; i < reorderG.K; ++i)
@@ -114,7 +100,7 @@ namespace cpupg
 
                 // 这里做了去重，保证同一个反向边只出现一次
                 bool flag = true;
-                for (int32_t j = 0; j < i; j++)
+                for (int32_t j = 0; j < reorderG.K; j++)
                 {
                     if (reorderG.at(id_y, j) == id_x)
                     {
@@ -124,7 +110,7 @@ namespace cpupg
                 }
                 if (flag)
                 {
-                    unsigned short pos;
+                    unsigned pos = 0;
 #pragma omp atomic capture
                     pos = edgeCount[id_y]++;
 
@@ -136,7 +122,7 @@ namespace cpupg
             }
         }
 
-#pragma omp parallel for schedule(dynamic, 100)
+#pragma omp parallel for schedule(dynamic, workloads)
         for (int32_t id_x = 0; id_x < reversedG.N; id_x++)
         {
             for (int32_t i = edgeCount[id_x]; i < reversedG.K; ++i)
@@ -145,15 +131,24 @@ namespace cpupg
             }
         }
         printMemoryUsage();
-        // reversedG.debug(0);
+#ifdef DEBUG
+        reversedG.debug(0);
+#endif
     }
 
     void CagraBuilder::merge()
     {
+        const int lines = std::max((info.R * sizeof(int) / CACHELINE / 2), (size_t)1);
         graph.init(reorderG.N, info.R);
-#pragma omp parallel for schedule(dynamic, 100)
+        graph.prefetch(0, lines);
+        reorderG.prefetch(0, lines);
+        reversedG.prefetch(0, lines);
+#pragma omp parallel for schedule(dynamic, workloads)
         for (int32_t id_x = 0; id_x < reversedG.N; id_x++)
         {
+            graph.prefetch(id_x + 1, lines);
+            reorderG.prefetch(id_x + 1, lines);
+            reversedG.prefetch(id_x + 1, lines);
             unsigned rSize = edgeCount[id_x]; // 反向图的边数
             unsigned sSize = reorderG.K;      // 正向图的边数
             unsigned rUse = 0;                // 反向图使用的边数
@@ -178,7 +173,9 @@ namespace cpupg
             }
         }
         printMemoryUsage();
-        // graph.debug(0);
+#ifdef DEBUG
+        graph.debug(0);
+#endif
     }
     CagraBuilder::~CagraBuilder() {}
 }

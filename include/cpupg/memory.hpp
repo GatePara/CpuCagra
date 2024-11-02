@@ -9,9 +9,12 @@
 #include <cstddef>
 #include <sys/mman.h>
 #include <stdexcept>
+#define CACHELINE 64
 #if defined(__SSE2__)
+#define CACHELINE 64
 #include <immintrin.h>
 #elif defined(__aarch64__)
+#define CACHELINE 128
 #include <arm_neon.h>
 #endif
 

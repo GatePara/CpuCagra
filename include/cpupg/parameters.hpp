@@ -12,6 +12,7 @@ namespace cpupg
     struct CagraConfig
     {
         std::string knng_path;
+        std::string knng_format;
         std::string save_path;
         int r_init;
         int r;
@@ -55,6 +56,16 @@ namespace cpupg
         else
         {
             std::cerr << "Error: KNNG_PATH not found or not a string." << std::endl;
+        }
+
+        // 读取 KNNG_FORMAT
+        if (cagra.HasMember("KNNG_FORMAT") && cagra["KNNG_FORMAT"].IsString())
+        {
+            config.knng_format = cagra["KNNG_FORMAT"].GetString();
+        }
+        else
+        {
+            std::cerr << "Error: KNNG_FORMAT not found or not a string." << std::endl;
         }
 
         // 读取 SAVE_PATH

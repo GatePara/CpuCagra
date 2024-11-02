@@ -20,6 +20,7 @@ endif()
 # set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fsanitize=address")
 
 add_definitions(-Ofast -march=native -Wall)
-# add_definitions(-O2 -march=native -Wall)
+# add_definitions(-g -march=native -Wall)
+# add_definitions(-DDEBUG)
 add_subdirectory(src)
 add_subdirectory(test)
