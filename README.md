@@ -21,8 +21,9 @@ Configure your settings in `cagra.json` as shown below. This file includes paths
 ```json
 {
     "cagra": {
-        "KNNG_PATH": "/path/to/your/project-root/build/knng.graph",
-        "SAVE_PATH": "/path/to/your/project-root/build/cagra.graph",
+        "KNNG_PATH": "/path/to/your/project-root/knng.graph",
+        "KNNG_FORMAT": "efanna",
+        "SAVE_PATH": "/path/to/your/project-root/cagra.graph",
         "R_INIT": 128,
         "R": 64
     }
@@ -31,10 +32,20 @@ Configure your settings in `cagra.json` as shown below. This file includes paths
 
 ### Configuration Options
 
+Here's an improved version with your instructions:
+
+---
+
+### Configuration Options
+
 - **KNNG_PATH**: Path to the input KNN graph.
 - **SAVE_PATH**: Output path for the generated CAGRA graph.
-- **R_INIT**: Rank-based reorder graph degree parameter which must lower than knn graph degree.
-- **R**: Final degree parameter.
+- **KNNG_FORMAT**: Specifies the KNN-Graph file format, supporting both **efanna** and **fbin** formats.
+    - **efanna**: Each entry consists of `k` (an unsigned 4-byte integer) followed by a list of `k` nearest neighbors (each represented by an unsigned 4-byte integer). This sequence is repeated for each node in the graph.
+    - **fbin**: Each entry begins with `k` (an unsigned 4-byte integer) followed by `k` neighbor indices (each a 4-byte unsigned integer). The pattern continues for all nodes.
+- **R_INIT**: Rank-based reorder graph degree parameter; must be less than or equal to the KNN graph degree.
+- **R**: Final cagra graph degree parameter.
+
 
 ## Build and Run
 
