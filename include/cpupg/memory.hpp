@@ -9,13 +9,16 @@
 #include <cstddef>
 #include <sys/mman.h>
 #include <stdexcept>
-#define CACHELINE 64
+#include <sys/resource.h>
+
 #if defined(__SSE2__)
 #define CACHELINE 64
 #include <immintrin.h>
 #elif defined(__aarch64__)
 #define CACHELINE 128
 #include <arm_neon.h>
+#else
+#define CACHELINE 64
 #endif
 
 #if defined(__clang__)
@@ -38,6 +41,19 @@
 #define PG_INLINE
 
 #endif
+
+inline void printMemoryUsage()
+{
+    struct rusage usage;
+    if (getrusage(RUSAGE_SELF, &usage) == 0)
+    {
+        std::cout << "Memory usage: " << usage.ru_maxrss / 1024.0 << " MB" << std::endl;
+    }
+    else
+    {
+        std::cerr << "Error in getting memory usage" << std::endl;
+    }
+}
 
 inline void alloc64B(void **hostPtr, size_t nbytes, int value)
 {
@@ -253,4 +269,3 @@ inline void mem_prefetch(char *ptr, const int num_lines)
         break;
     }
 }
-

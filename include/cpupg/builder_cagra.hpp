@@ -8,15 +8,15 @@ namespace cpupg
     public:
         CagraBuilder(GraphInfo info);
         virtual ~CagraBuilder();
-        const Graph<int32_t> &build(Graph<int32_t> &knnG);
+        const Graph<> &build(Graph<> &knnG);
 
     private:
-        void reorder(Graph<int32_t> &knnG);
+        void reorder(Graph<> &knnG);
         void reverse();
         void merge();
-        
-        Graph<int32_t> reorderG;
-        Graph<int32_t> reversedG;
-        std::vector<unsigned> edgeCount;
+
+        Graph<> reorderG;
+        Graph<> reversedG;
+        std::vector<uint64_t> edgeCount;
     };
 } // namespace cpupg

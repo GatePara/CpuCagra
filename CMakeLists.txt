@@ -21,6 +21,6 @@ endif()
 
 add_definitions(-Ofast -march=native -Wall)
 # add_definitions(-g -march=native -Wall)
-# add_definitions(-DDEBUG)
+add_definitions(-DDEBUG)
 add_subdirectory(src)
 add_subdirectory(test)

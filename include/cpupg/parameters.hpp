@@ -14,8 +14,8 @@ namespace cpupg
         std::string knng_path;
         std::string knng_format;
         std::string save_path;
-        int r_init;
-        int r;
+        uint64_t r_init;
+        uint64_t r;
     };
 
     // 从 JSON 文件加载配置
@@ -79,23 +79,23 @@ namespace cpupg
         }
 
         // 读取 R_INIT
-        if (cagra.HasMember("R_INIT") && cagra["R_INIT"].IsInt())
+        if (cagra.HasMember("R_INIT") && cagra["R_INIT"].IsUint64())
         {
-            config.r_init = cagra["R_INIT"].GetInt();
+            config.r_init = cagra["R_INIT"].GetUint64();
         }
         else
         {
-            std::cerr << "Error: R_INIT not found or not an integer." << std::endl;
+            std::cerr << "Error: R_INIT not found or not an Uint64." << std::endl;
         }
 
         // 读取 R
-        if (cagra.HasMember("R") && cagra["R"].IsInt())
+        if (cagra.HasMember("R") && cagra["R"].IsUint64())
         {
-            config.r = cagra["R"].GetInt();
+            config.r = cagra["R"].GetUint64();
         }
         else
         {
-            std::cerr << "Error: R not found or not an integer." << std::endl;
+            std::cerr << "Error: R not found or not an Uint64." << std::endl;
         }
 
         return config;

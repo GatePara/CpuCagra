@@ -10,7 +10,7 @@ namespace cpupg
         virtual ~Builder();
 
     protected:
-        Graph<int32_t> graph;
+        Graph<> graph;
         GraphInfo info;
     };
 } // namespace cpupg

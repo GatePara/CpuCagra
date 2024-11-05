@@ -9,8 +9,8 @@ CpuCagra is a CPU-based implementation of the CAGRA graph index designed to perf
 
 ## Dependencies
 
-- **CMake**: for building the project.
-- **C++17 or later**: the project requires a compiler with C++17 or later support.
+- **CMake 3.22+**: for building the project.
+- **C++17**: the project requires a compiler with C++17 or later support.
 
 ## Configuration
 
@@ -32,17 +32,11 @@ Configure your settings in `cagra.json` as shown below. This file includes paths
 
 ### Configuration Options
 
-Here's an improved version with your instructions:
-
----
-
-### Configuration Options
-
 - **KNNG_PATH**: Path to the input KNN graph.
 - **SAVE_PATH**: Output path for the generated CAGRA graph.
-- **KNNG_FORMAT**: Specifies the KNN-Graph file format, supporting both **efanna** and **fbin** formats.
-    - **efanna**: Each entry consists of `k` (an unsigned 4-byte integer) followed by a list of `k` nearest neighbors (each represented by an unsigned 4-byte integer). This sequence is repeated for each node in the graph.
-    - **fbin**: Each entry begins with `k` (an unsigned 4-byte integer) followed by `k` neighbor indices (each a 4-byte unsigned integer). The pattern continues for all nodes.
+- **KNNG_FORMAT**: Specifies the KNN-Graph file format, supporting both `efanna` and `fbin` formats.
+    - `efanna`: Each entry consists of `k` (an unsigned 4-byte integer) followed by a list of `k` nearest neighbors (each represented by an unsigned 4-byte integer). This sequence is repeated for each node in the graph.
+    - `fbin`: The first 8 bytes consist of two unsigned 4-byte integers, representing `num` and `k`. The remainder of the file contains `num` * `k` unsigned 4-byte integers, each representing the index of a neighboring node.The neighbors are listed sequentially for each node, with each node's k neighbors appearing consecutively. 
 - **R_INIT**: Rank-based reorder graph degree parameter; must be less than or equal to the KNN graph degree.
 - **R**: Final cagra graph degree parameter.
 
@@ -53,13 +47,19 @@ Here's an improved version with your instructions:
 
 Ensure `cagra.json` is configured with the correct paths and parameters.
 
-### 2. Run `run.sh`
+### 2. Auto Build
 
-The `run.sh` script will automatically build and execute the project. Ensure it has execute permissions:
+The `build.sh` script will automatically build the project. Ensure it has execute permissions:
 
 ```bash
-chmod +x run.sh
-./run.sh
+chmod +x build.sh
+./build.sh
+```
+
+### 3. Run 
+Run the `test_cagra` with the following command:
+```bash
+./build/test/test_cagra cagra.json
 ```
 
 ## References
