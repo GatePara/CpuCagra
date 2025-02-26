@@ -1,8 +1,8 @@
 {
     "cagra": {
-        "KNNG_PATH": "/path/to/your/project-root/knng.graph",
+        "KNNG_PATH": "/mnt/data2/wt/sift/sift_200nn.graph",
         "KNNG_FORMAT": "efanna",
-        "SAVE_PATH": "/path/to/your/project-root/cagra.graph",
+        "SAVE_PATH": "/mnt/data2/wt/sift/sift_cagra_R64.graph",
         "R_INIT": 128,
         "R": 64
     }

@@ -245,6 +245,23 @@ namespace cpupg
       out.close();
     }
 
+    void saveNsg(const char *filename)
+    {
+      std::ofstream out(filename, std::ios::binary | std::ios::out);
+      
+      unsigned width = K;
+      unsigned ep = 0;
+      out.write((char *)&width, sizeof(unsigned));
+      out.write((char *)&ep, sizeof(unsigned));
+      for (id_t i = 0; i < N; i++)
+      {
+        id_t *edge = edges(i);
+        out.write((char *)&width, sizeof(unsigned));
+        out.write(reinterpret_cast<const char *>(edge), width * sizeof(id_t));
+      }
+      out.close();
+    }
+
     void debug(id_t i)
     {
       for (uint64_t j = 0; j < K; j++)
